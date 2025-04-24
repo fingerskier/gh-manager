@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "nexe index.js --output dist/gh-manager"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +17,17 @@
     "@octokit/rest": "^21.1.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nexe": "^4.0.0-rc.2"
+  },
+  "bin": "index.js",
+  "pkg": {
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
+    ],
+    "outputPath": "dist"
   }
 }
