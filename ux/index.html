@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    h2 {
+      margin-top: 2rem;
+      color: #444;
+    }
+    .repo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .repo-card {
+      background-color: #fafafa;
+      padding: 1rem;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .repo-card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+    }
+    .status {
+      font-weight: bold;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      display: inline-block;
+      margin: 0.25rem 0;
+    }
+    .status.success {
+      background-color: #e6ffe6;
+      color: #006600;
+    }
+    .status.failure {
+      background-color: #ffe6e6;
+      color: #cc0000;
+    }
+    .status.pending {
+      background-color: #fff2e6;
+      color: #cc7700;
+    }
+    .repo-selector {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 1rem 0;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .visibility-selector {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+      align-items: center;
+    }
+    .visibility-selector label {
+      font-weight: bold;
+    }
+    .visibility-selector select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .repo-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .repo-tag {
+      background-color: #e6e6e6;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .repo-tag.selected {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .refresh-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 1rem 0;
+    }
+    .refresh-button:hover {
+      background-color: #45a049;
+    }
+
+    /* Settings Form Styles */
+    .settings-form {
+      background-color: #f8f8f8;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      position: relative;
+      background-color: white;
+      margin: 5% auto;
+      padding: 2rem;
+      width: 80%;
+      max-width: 800px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+      border: none;
+      background: none;
+      padding: 0.5rem;
+    }
+
+    .close-button:hover {
+      color: #333;
+    }
+
+    .modal-section {
+      margin: 1.5rem 0;
+    }
+
+    .modal-section h3 {
+      color: #333;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+
+    .issue-list, .build-list, .release-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .issue-list li, .build-list li, .release-list li {
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      background-color: #f8f8f8;
+      border-radius: 4px;
+      border-left: 4px solid #4CAF50;
+    }
+
+    .build-list li {
+      border-left-color: #2196F3;
+    }
+
+    .release-list li {
+      border-left-color: #9C27B0;
+    }
+
+    .repo-card {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .repo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Team Dashboard</h1>
+    
+    <div id="settings-form" class="settings-form">
+      <h2>GitHub Settings</h2>
+      <div class="form-group">
+        <label for="github-token">GitHub Token:</label>
+        <input type="password" id="github-token" placeholder="Enter your GitHub token">
+      </div>
+      <div class="form-group">
+        <label for="github-org">Organization Name:</label>
+        <input type="text" id="github-org" placeholder="Enter your organization name">
+      </div>
+      <button id="save-settings" class="refresh-button">Save Settings</button>
+    </div>
+
+    <div id="dashboard-content" style="display: none;">
+      <div class="visibility-selector">
+        <label for="visibility">Repository Visibility:</label>
+        <select id="visibility" class="repo-selector">
+          <option value="private">Private</option>
+          <option value="public">Public</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      <div class="repo-list" id="repo-list"></div>
+      <button class="refresh-button" id="refresh-button">Refresh Data</button>
+
+      <div class="repo-grid" id="repo-grid"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="repo-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-button" id="close-modal">&times;</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedRepos = new Set(JSON.parse(localStorage.getItem('selectedRepos') || '[]'))
+    let allRepos = []
+
+    // Utility function to save selected repos to localStorage
+    const saveSelectedRepos = () => {
+      localStorage.setItem('selectedRepos', JSON.stringify(Array.from(selectedRepos)))
+    }
+
+    // Utility function to create repo card
+    const createRepoCard = (repo) => {
+      const card = document.createElement('div')
+      card.className = 'repo-card'
+      card.onclick = () => fetchRepoDetails(repo.name)
+      
+      const title = document.createElement('h3')
+      title.textContent = repo.name
+      card.appendChild(title)
+
+      const issues = document.createElement('div')
+      issues.textContent = `Open Issues: ${repo.openIssues}`
+      card.appendChild(issues)
+
+      if (repo.latestBuild) {
+        const build = document.createElement('div')
+        const statusClass = repo.latestBuild.status === 'success' ? 'success' : 
+                          repo.latestBuild.status === 'failure' ? 'failure' : 'pending'
+        build.innerHTML = `Latest Build: <span class="status ${statusClass}">${repo.latestBuild.status}</span>`
+        card.appendChild(build)
+      }
+
+      if (repo.latestRelease) {
+        const release = document.createElement('div')
+        release.textContent = `Latest Release: ${repo.latestRelease.name}`
+        card.appendChild(release)
+      }
+
+      return card
+    }
+
+    // Fetch Repositories
+    const fetchRepositories = async (visibility) => {
+      try {
+        const token = localStorage.getItem('githubToken')
+        const org = localStorage.getItem('githubOrg')
+        const response = await fetch(`/api/repositories?visibility=${visibility}&token=${token}&org=${org}`)
+        allRepos = await response.json()
+        const repoList = document.getElementById('repo-list')
+        repoList.innerHTML = ''
+        allRepos.forEach(repo => {
+          const tag = document.createElement('div')
+          tag.className = `repo-tag ${selectedRepos.has(repo.name) ? 'selected' : ''}`
+          tag.textContent = repo.name
+          tag.onclick = () => {
+            if (selectedRepos.has(repo.name)) {
+              selectedRepos.delete(repo.name)
+              tag.classList.remove('selected')
+            } else {
+              selectedRepos.add(repo.name)
+              tag.classList.add('selected')
+            }
+            saveSelectedRepos()
+            fetchRepoSummaries()
+          }
+          repoList.appendChild(tag)
+        })
+      } catch (error) {
+        console.error('Error fetching repositories:', error)
+      }
+    }
+
+    // Fetch Repository Summaries
+    const fetchRepoSummaries = async () => {
+      if (selectedRepos.size === 0) {
+        document.getElementById('repo-grid').innerHTML = '<p>Select repositories to view their status</p>'
+        return
+      }
+
+      try {
+        const token = localStorage.getItem('githubToken')
+        const org = localStorage.getItem('githubOrg')
+        const response = await fetch(`/api/repo-summary?repos=${Array.from(selectedRepos).join(',')}&token=${token}&org=${org}`)
+        const summaries = await response.json()
+        const grid = document.getElementById('repo-grid')
+        grid.innerHTML = ''
+        summaries.forEach(summary => {
+          grid.appendChild(createRepoCard(summary))
+        })
+      } catch (error) {
+        console.error('Error fetching repository summaries:', error)
+      }
+    }
+
+    // Fetch detailed repository data
+    const fetchRepoDetails = async (repoName) => {
+      try {
+        const token = localStorage.getItem('githubToken')
+        const org = localStorage.getItem('githubOrg')
+        const [issues, builds, releases] = await Promise.all([
+          fetch(`/api/issues?repo=${repoName}&token=${token}&org=${org}`).then(r => r.json()),
+          fetch(`/api/actions?repo=${repoName}&token=${token}&org=${org}`).then(r => r.json()),
+          fetch(`/api/releases?repo=${repoName}&token=${token}&org=${org}`).then(r => r.json())
+        ])
+
+        const modal = document.getElementById('repo-modal')
+        const modalContent = document.getElementById('modal-content')
+        
+        modalContent.innerHTML = `
+          <h2>${repoName}</h2>
+          
+          <div class="modal-section">
+            <h3>Open Issues</h3>
+            <ul class="issue-list">
+              ${issues.slice(0, 10).map(issue => `
+                <li>
+                  <strong>${issue.title}</strong>
+                  <br>
+                  <small>Created: ${new Date(issue.created_at).toLocaleString()}</small>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+
+          <div class="modal-section">
+            <h3>Recent Builds</h3>
+            <ul class="build-list">
+              ${builds.workflow_runs.slice(0, 5).map(build => `
+                <li>
+                  <strong>${build.name}</strong>
+                  <br>
+                  <span class="status ${build.conclusion === 'success' ? 'success' : 
+                                     build.conclusion === 'failure' ? 'failure' : 'pending'}">
+                    ${build.conclusion}
+                  </span>
+                  <br>
+                  <small>Started: ${new Date(build.created_at).toLocaleString()}</small>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+
+          <div class="modal-section">
+            <h3>Recent Releases</h3>
+            <ul class="release-list">
+              ${releases.slice(0, 5).map(release => `
+                <li>
+                  <strong>${release.name}</strong>
+                  <br>
+                  <small>Published: ${new Date(release.published_at).toLocaleString()}</small>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `
+
+        modal.style.display = 'block'
+      } catch (error) {
+        console.error('Error fetching repository details:', error)
+      }
+    }
+
+    // Initialize modal close button
+    const initializeModal = () => {
+      const modal = document.getElementById('repo-modal')
+      const closeButton = document.getElementById('close-modal')
+      
+      closeButton.onclick = () => {
+        modal.style.display = 'none'
+      }
+      
+      window.onclick = (event) => {
+        if (event.target === modal) {
+          modal.style.display = 'none'
+        }
+      }
+    }
+
+    // Handle settings form
+    const initializeSettings = () => {
+      const settingsForm = document.getElementById('settings-form')
+      const dashboardContent = document.getElementById('dashboard-content')
+      const saveButton = document.getElementById('save-settings')
+      const tokenInput = document.getElementById('github-token')
+      const orgInput = document.getElementById('github-org')
+
+      // Load saved settings
+      const savedToken = localStorage.getItem('githubToken')
+      const savedOrg = localStorage.getItem('githubOrg')
+      
+      if (savedToken) tokenInput.value = savedToken
+      if (savedOrg) orgInput.value = savedOrg
+
+      // Show dashboard if settings exist
+      if (savedToken && savedOrg) {
+        settingsForm.style.display = 'none'
+        dashboardContent.style.display = 'block'
+      }
+
+      saveButton.onclick = () => {
+        const token = tokenInput.value.trim()
+        const org = orgInput.value.trim()
+
+        if (!token || !org) {
+          alert('Please enter both GitHub token and organization name')
+          return
+        }
+
+        localStorage.setItem('githubToken', token)
+        localStorage.setItem('githubOrg', org)
+        
+        settingsForm.style.display = 'none'
+        dashboardContent.style.display = 'block'
+        
+        // Reinitialize dashboard with new settings
+        initializeDashboard()
+      }
+    }
+
+    // Update initializeDashboard to include modal initialization
+    const initializeDashboard = async () => {
+      const visibilitySelector = document.getElementById('visibility')
+      const refreshButton = document.getElementById('refresh-button')
+      
+      // Initial fetch with default visibility (private)
+      await fetchRepositories(visibilitySelector.value)
+      
+      // Handle visibility changes
+      visibilitySelector.addEventListener('change', async (e) => {
+        const selectedVisibility = e.target.value
+        await fetchRepositories(selectedVisibility)
+        selectedRepos.clear()
+        saveSelectedRepos()
+        document.getElementById('repo-grid').innerHTML = '<p>Select repositories to view their status</p>'
+      })
+      
+      // Handle refresh button
+      refreshButton.addEventListener('click', fetchRepoSummaries)
+
+      // Initialize modal
+      initializeModal()
+    }
+
+    // Run the initialization
+    initializeSettings()
+  </script>
+</body>
+</html>
